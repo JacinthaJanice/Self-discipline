@@ -337,7 +337,9 @@
             }
         };
 
-        // Service Worker for PWA
+        renderDashboard();
+
+        // This is the new service worker registration code you need to add
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/service-worker.js').then(registration => {
@@ -347,8 +349,6 @@
                 });
             });
         }
-        
-        renderDashboard();
     </script>
 </body>
 </html>
