@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-Discipline Dashboard</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+        :root {
+            --bg-color: #1a1a2e;
+            --card-bg: #162447;
+            --text-color: #e0e0e0;
+            --accent-color: #ffc476;
+            --green: #4caf50;
+            --yellow: #ffeb3b;
+            --red: #f44336;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            display: grid;
+            gap: 20px;
+            grid-template-columns: 2fr 1fr;
+        }
+        h1, h2, h3 {
+            color: var(--accent-color);
+            border-bottom: 2px solid var(--card-bg);
+            padding-bottom: 10px;
+        }
+        .dashboard-card {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .daily-task {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #2e3a59;
+            border-radius: 5px;
+            transition: transform 0.2s;
+        }
+        .daily-task:hover {
+            transform: translateX(5px);
+        }
+        .daily-task input[type="checkbox"] {
+            margin-right: 15px;
+            min-width: 20px;
+            min-height: 20px;
+            accent-color: var(--accent-color);
+        }
+        .task-details {
+            flex-grow: 1;
+        }
+        .task-details p {
+            margin: 0;
+            font-size: 14px;
+            color: #b0b0b0;
+        }
+        .task-details strong {
+            display: block;
+            font-size: 16px;
+            color: var(--text-color);
+        }
+        .task-details p.hormone-cycle {
+            font-style: italic;
+            color: var(--accent-color);
+        }
+        .header {
+            grid-column: 1 / -1;
+            text-align: center;
+        }
+        .progress-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .score-display {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .score-green { color: var(--green); }
+        .score-yellow { color: var(--yellow); }
+        .score-red { color: var(--red); }
+        .progress-bar-container {
+            background-color: #4b5d84;
+            border-radius: 5px;
+            overflow: hidden;
+            height: 10px;
+            width: 70%;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            transition: width 0.3s ease;
+            background-color: var(--accent-color);
+        }
+        .weekly-card {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Self-Discipline Dashboard</h1>
+            <p id="current-date-info"></p>
+        </div>
+        <div class="dashboard-card">
+            <h2>Today's Tasks</h2>
+            <div id="daily-tasks-container"></div>
+            <div class="progress-box">
+                <h3>Daily Score:</h3>
+                <span id="daily-score-text" class="score-display">0/6 - 0%</span>
+            </div>
+            <div class="progress-bar-container">
+                <div id="daily-progress-bar" class="progress-bar"></div>
+            </div>
+        </div>
+        <div class="dashboard-card">
+            <h2>Weekly Progress</h2>
+            <div id="weekly-progress-container"></div>
+            <h2>Monthly Progress</h2>
+            <div id="monthly-progress-container"></div>
+        </div>
+    </div>
+
+    <script>
+        // Data for tasks and schedule
+        const tasks = {
+            'Light Exercise': { time: '5:20 AM', icon: '🏃' },
+            'Morning Travel Study': { time: '6:00 AM', icon: '📖' },
+            'Deep Work Session 1 (Career)': { time: '2:00 PM', icon: '💻' },
+            'Deep Work Session 2 (Placement/Academics)': { time: '3:00 PM', icon: '🧠' },
+            'Hobby/Creative Session': { time: '4:00 PM', icon: '🎨' },
+            'Daily Review': { time: '4:45 PM', icon: '📝' },
+        };
+
+        const startDate = new Date('2025-08-04T00:00:00');
+        const endDate = new Date('2025-12-15T00:00:00');
+        
+        // Example schedules, customized for you. This will be an extensive list.
+        const dailySchedule = [
+            // Week 1-3: College 8-11:30 AM
+            { date: '2025-08-04', dayType: 'college-regular', career: 'Full Stack: HTML/CSS basics', placement: 'DSA: Arrays - 5 problems', hobby: 'Comic: Sketching characters' },
+            { date: '2025-08-05', dayType: 'college-regular', career: 'Full Stack: Build a simple static page', placement: 'DSA: Linked Lists - 5 problems', hobby: 'Music: Practice scales on instrument' },
+            { date: '2025-08-06', dayType: 'college-regular', career: 'Full Stack: Intro to JavaScript variables', placement: 'Aptitude: Data Interpretation', hobby: 'Comic: Inking a panel' },
+            { date: '2025-08-07', dayType: 'college-regular', career: 'Full Stack: JavaScript loops & functions', placement: 'DSA: Stacks & Queues - 5 problems', hobby: 'Music: Learn a simple chord progression' },
+            { date: '2025-08-08', dayType: 'college-regular', career: 'Full Stack: Build a JS calculator', placement: 'Verbal Ability: Reading Comprehension', hobby: 'Comic: Brainstorming story ideas' },
+            // ... more daily schedules up to Dec 15
+            { date: '2025-09-02', dayType: 'free-morning', career: 'Full Stack: Intro to Node.js & npm', placement: 'Placement Exam Prep', hobby: 'Comic: Finalizing first comic page' },
+            { date: '2025-09-09', dayType: 'college-tuesday', career: 'Data Science: Python for Data Analysis', placement: 'Project submission prep', hobby: 'Music: Writing a short melody' },
+            { date: '2025-10-15', dayType: 'free-morning', career: 'Data Science: Build a simple machine learning model', placement: 'Coding Contest Practice', hobby: 'Comic: Starting second comic page' },
+            { date: '2025-11-20', dayType: 'free-morning', career: 'Full Stack: React.js component lifecycle', placement: 'Mock Interview Practice', hobby: 'Music: Recording a short demo' },
+            { date: '2025-12-12', dayType: 'free-morning', career: 'Portfolio Project: Finalizing features', placement: 'Final placement exam prep', hobby: 'Hobby: Project completion' },
+            { date: '2025-12-15', dayType: 'free-morning', career: 'Project Showcase', placement: 'Relax and Review', hobby: 'Celebrate Christmas!' }
+            // ... and so on
+        ];
+        
+        // Hormonal Cycle logic
+        const getHormonalPhase = (day) => {
+            const cycleLength = 28;
+            const cycleDay = (day % cycleLength === 0) ? cycleLength : day % cycleLength;
+            if (cycleDay >= 1 && cycleDay <= 7) return 'Follicular Phase (Low energy - Focus on mobility & light cardio)';
+            if (cycleDay >= 8 && cycleDay <= 14) return 'Ovulatory Phase (High energy - Focus on strength training & HIIT)';
+            if (cycleDay >= 15 && cycleDay <= 21) return 'Luteal Phase (Energy drops - Focus on light weights & endurance)';
+            return 'Menstrual Phase (Rest & recovery - Focus on stretching & gentle walks)';
+        };
+
+        const dailyTasksContainer = document.getElementById('daily-tasks-container');
+        const dailyScoreText = document.getElementById('daily-score-text');
+        const dailyProgressBar = document.getElementById('daily-progress-bar');
+        const weeklyProgressContainer = document.getElementById('weekly-progress-container');
+        const monthlyProgressContainer = document.getElementById('monthly-progress-container');
+        const currentDateInfo = document.getElementById('current-date-info');
+
+        let allDays = {}; // Store all daily data
+        const getLocalStorageKey = (date) => `progress_${date.toISOString().slice(0, 10)}`;
+
+        const renderDashboard = () => {
+            const today = new Date();
+            const dayNumber = Math.ceil((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
+            const hormonalCyclePhase = getHormonalPhase(dayNumber);
+
+            const scheduleForToday = dailySchedule.find(s => s.date === today.toISOString().slice(0, 10));
+            if (!scheduleForToday) {
+                dailyTasksContainer.innerHTML = `<p>No schedule found for today. Enjoy your day!</p>`;
+                return;
+            }
+
+            currentDateInfo.textContent = `Date: ${today.toDateString()} | Week: ${Math.ceil(dayNumber / 7)} | Hormonal Phase: ${hormonalCyclePhase}`;
+            dailyTasksContainer.innerHTML = '';
+            let tasksCompleted = 0;
+
+            for (const taskName in tasks) {
+                const localStorageKey = getLocalStorageKey(today);
+                const savedProgress = JSON.parse(localStorage.getItem(localStorageKey)) || {};
+                const isChecked = savedProgress[taskName] || false;
+                if (isChecked) tasksCompleted++;
+
+                const taskDetails = tasks[taskName];
+                const taskElement = document.createElement('div');
+                taskElement.className = 'daily-task';
+                taskElement.innerHTML = `
+                    <input type="checkbox" id="${taskName}" ${isChecked ? 'checked' : ''}>
+                    <div class="task-details">
+                        <strong>${taskDetails.icon} ${taskName} (${taskDetails.time})</strong>
+                        <p>${getTaskDescription(taskName, scheduleForToday, hormonalCyclePhase)}</p>
+                    </div>
+                `;
+                dailyTasksContainer.appendChild(taskElement);
+
+                taskElement.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
+                    savedProgress[taskName] = e.target.checked;
+                    localStorage.setItem(localStorageKey, JSON.stringify(savedProgress));
+                    updateDailyProgress();
+                    updateWeeklyProgress();
+                    updateMonthlyProgress();
+                });
+            }
+            updateDailyProgress();
+            updateWeeklyProgress();
+            updateMonthlyProgress();
+        };
+
+        const getTaskDescription = (taskName, schedule, hormonalPhase) => {
+            if (taskName === 'Deep Work Session 1 (Career)') return schedule.career;
+            if (taskName === 'Deep Work Session 2 (Placement/Academics)') return schedule.placement;
+            if (taskName === 'Hobby/Creative Session') return schedule.hobby;
+            if (taskName === 'Light Exercise') return `<p class="hormone-cycle"><strong>Exercise Tip:</strong> ${hormonalPhase}</p>`;
+            return 'Just do it!';
+        };
+
+        const updateDailyProgress = () => {
+            const today = new Date();
+            const localStorageKey = getLocalStorageKey(today);
+            const savedProgress = JSON.parse(localStorage.getItem(localStorageKey)) || {};
+            const completedCount = Object.values(savedProgress).filter(Boolean).length;
+            const totalTasks = Object.keys(tasks).length;
+            const scorePercentage = (completedCount / totalTasks) * 100;
+
+            dailyScoreText.textContent = `${completedCount}/${totalTasks} - ${scorePercentage.toFixed(0)}%`;
+            dailyProgressBar.style.width = `${scorePercentage}%`;
+
+            if (scorePercentage === 100) dailyScoreText.className = 'score-display score-green';
+            else if (scorePercentage >= 50) dailyScoreText.className = 'score-display score-yellow';
+            else dailyScoreText.className = 'score-display score-red';
+        };
+
+        const updateWeeklyProgress = () => {
+            weeklyProgressContainer.innerHTML = '';
+            const today = new Date();
+            let weekData = {};
+
+            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                const weekNumber = Math.ceil((d - startDate) / (1000 * 60 * 60 * 24 * 7)) + 1;
+                if (!weekData[weekNumber]) weekData[weekNumber] = { total: 0, completed: 0, days: 0 };
+                
+                const localStorageKey = getLocalStorageKey(d);
+                const savedProgress = JSON.parse(localStorage.getItem(localStorageKey)) || {};
+                const dailyCompleted = Object.values(savedProgress).filter(Boolean).length;
+                
+                weekData[weekNumber].completed += dailyCompleted;
+                weekData[weekNumber].total += Object.keys(tasks).length;
+                weekData[weekNumber].days++;
+            }
+
+            for (const week in weekData) {
+                const totalPossible = weekData[week].days * Object.keys(tasks).length;
+                const weeklyScore = (weekData[week].completed / totalPossible) * 100;
+                
+                const weekElement = document.createElement('div');
+                weekElement.className = 'weekly-card';
+                weekElement.innerHTML = `
+                    <h3>Week ${week}</h3>
+                    <div class="progress-box">
+                        <p>${weekData[week].completed}/${totalPossible} tasks completed</p>
+                        <span class="score-display">${weeklyScore.toFixed(0)}%</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: ${weeklyScore}%"></div>
+                    </div>
+                `;
+                weeklyProgressContainer.appendChild(weekElement);
+            }
+        };
+        
+        const updateMonthlyProgress = () => {
+            monthlyProgressContainer.innerHTML = '';
+            let monthData = {};
+
+            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                const month = d.getMonth();
+                if (!monthData[month]) monthData[month] = { total: 0, completed: 0, days: 0 };
+
+                const localStorageKey = getLocalStorageKey(d);
+                const savedProgress = JSON.parse(localStorage.getItem(localStorageKey)) || {};
+                const dailyCompleted = Object.values(savedProgress).filter(Boolean).length;
+                
+                monthData[month].completed += dailyCompleted;
+                monthData[month].total += Object.keys(tasks).length;
+                monthData[month].days++;
+            }
+
+            const monthNames = ["August", "September", "October", "November", "December"];
+            for (const month in monthData) {
+                const totalPossible = monthData[month].days * Object.keys(tasks).length;
+                const monthlyScore = (monthData[month].completed / totalPossible) * 100;
+                
+                const monthElement = document.createElement('div');
+                monthElement.className = 'weekly-card';
+                monthElement.innerHTML = `
+                    <h3>${monthNames[month-7]}</h3>
+                    <div class="progress-box">
+                        <p>${monthData[month].completed}/${totalPossible} tasks completed</p>
+                        <span class="score-display">${monthlyScore.toFixed(0)}%</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: ${monthlyScore}%"></div>
+                    </div>
+                `;
+                monthlyProgressContainer.appendChild(monthElement);
+            }
+        };
+
+        // Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js').then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+        
+        renderDashboard();
+    </script>
+</body>
+</html>
